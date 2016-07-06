@@ -12,3 +12,4 @@ Run shifter rate monitoring tool:
 
 	source set.sh
 	python ShiftMonitorTool.py
+
