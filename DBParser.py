@@ -201,7 +201,7 @@ class DBParser:
             phys = item[4]
             cms_ready = item[5]
             psi = item[6]
-            _list.append([int(LS),float(ilum),int(psi),bool(phys),bool(cms_ready)])
+            _list.append([LS,ilum,psi,phys,cms_ready])
         return _list
 
     # Use: Get the instant luminosity for each lumisection (only from CMS_RUNTIME_LOGGER.LUMI_SECTIONS)
@@ -244,7 +244,7 @@ class DBParser:
             phys = item[2]
             cms_ready = item[3]
             psi = item[4]
-            _list.append([int(LS),float(ilum),int(psi),bool(phys),bool(cms_ready)])
+            _list.append([LS,ilum,psi,phys,cms_ready])
         return _list
 
     # Use: Get the prescaled rate as a function 
@@ -1364,6 +1364,11 @@ class DBParser:
             pdData = cursor.fetchall()
         except:
             print "Error: Unable to retrieve PD data."
+
+        #ND
+        #print "=============="
+        #print pdData
+        #print "=============="
 
         PrimaryDatasets = {}
         for pd, LS, rate, in pdData:

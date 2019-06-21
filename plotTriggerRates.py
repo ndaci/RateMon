@@ -31,10 +31,9 @@ class MonitorController:
         # Set the default state for the rate_monitor and plotter to produce plots for triggers
         self.rate_monitor.object_list = []
 
-        #self.set_plotter_fits = False
-        self.rate_monitor.plotter.set_plotter_fits = False
-
-        self.rate_monitor.plotter.compare_fits = False
+        self.set_plotter_fits = False 
+        
+        self.compareFits = False
 
         self.rate_monitor.use_fills          = False
         self.rate_monitor.use_pileup         = True
@@ -59,9 +58,8 @@ class MonitorController:
         self.rate_monitor.plotter.use_multi_fit  = False
         self.rate_monitor.plotter.show_errors    = False
         self.rate_monitor.plotter.show_eq        = False
-        self.rate_monitor.plotter.save_png       = True
+        self.rate_monitor.plotter.save_pdf       = True
         self.rate_monitor.plotter.save_root_file = True
-        self.rate_monitor.plotter.show_fit_runs  = False
 
         self.rate_monitor.plotter.root_file_name   = "rate_plots.root"
         self.rate_monitor.plotter.label_Y = "pre-deadtime unprescaled rate / num colliding bx [Hz]"
@@ -89,6 +87,8 @@ class MonitorController:
                 "pathVeto=",
                 "Secondary",
                 "datasetRate",
+                "datasetBandwidth",
+                "datasetSize",
                 "L1ARate",
                 "streamRate",
                 "streamBandwidth",
@@ -104,8 +104,7 @@ class MonitorController:
                 "useCrossSection",
                 "useFills",
                 "useBunches",
-                "compareFits=",
-                "showFitRunGroups"
+                "compareFits="
             ])
 
         except:
@@ -117,12 +116,9 @@ class MonitorController:
             if label == "--fitFile":
                 # Specify the .pkl file to be used to extract fits from
                 # TODO: Needs to be updated to account for the fact that the plotter is expecting a different input
-                #fits = self.readFits(str(op))
+                fits = self.readFits(str(op))
                 #self.rate_monitor.plotter.setFits(fits)
-                fit_info = self.readFits(str(op))
-
-                #self.set_plotter_fits = True
-                self.rate_monitor.plotter.set_plotter_fits = True
+                self.set_plotter_fits = True            
 
                 self.rate_monitor.plotter.use_fit     = True
                 self.rate_monitor.plotter.show_errors = True
@@ -196,6 +192,34 @@ class MonitorController:
                 
                 self.rate_monitor.plotter.root_file_name   = "Dataset_Rates.root"
                 #self.rate_monitor.plotter.label_Y = "dataset rate / num colliding bx [Hz]"
+            elif label == "--datasetBandwidth":
+                # Make plots of the dataset bandwidths
+                # NEEDS TO BE TESTED
+                self.rate_monitor.use_dataset_bandwidth = True
+
+                self.rate_monitor.data_parser.use_L1_triggers  = False
+                self.rate_monitor.data_parser.use_HLT_triggers = False
+                self.rate_monitor.data_parser.use_streams  = False 
+                self.rate_monitor.data_parser.use_datasets = True
+                self.rate_monitor.data_parser.use_L1A_rate = False
+                
+                self.rate_monitor.data_parser.normalize_bunches = False
+
+                self.rate_monitor.plotter.root_file_name   = "Dataset_Bandwidth.root"
+            elif label == "--datasetSize":
+                # Make plots of dataset sizes
+                # NEEDS TO BE TESTED
+                self.rate_monitor.use_dataset_size = True
+
+                self.rate_monitor.data_parser.use_L1_triggers  = False
+                self.rate_monitor.data_parser.use_HLT_triggers = False
+                self.rate_monitor.data_parser.use_streams  = False
+                self.rate_monitor.data_parser.use_datasets = True
+                self.rate_monitor.data_parser.use_L1A_rate = False
+
+                self.rate_monitor.data_parser.normalize_bunches = False
+                
+                self.rate_monitor.plotter.root_file_name   = "Dataset_Size.root"
             elif label == "--L1ARate":
                 # Make plots of the L1A rate
                 self.rate_monitor.data_parser.use_L1_triggers  = False
@@ -345,10 +369,8 @@ class MonitorController:
                 self.rate_monitor.data_parser.normalize_bunches = False
             elif label == "--compareFits":
                 data_dict = self.readDataListTextFile(str(op))
-                self.rate_monitor.fitter.data_dict = data_dict
-                self.rate_monitor.plotter.compare_fits = True
-            elif label == "--showFitRunGroups":
-                self.rate_monitor.plotter.show_fit_run_groups = True
+                self.rate_monitor.data_dict = data_dict 
+                self.compareFits = True 
             else:
                 print "Unimplemented option '%s'." % label
                 return False
@@ -361,15 +383,16 @@ class MonitorController:
             if self.rate_monitor.use_fills:
                 self.rate_monitor.fill_list = arg_list
                 #self.rate_monitor.run_list = self.getRuns(arg_list)
-                self.rate_monitor.fitter.data_dict['user_input'] = self.getRuns(arg_list)
+                self.rate_monitor.data_dict['user_input'] = self.getRuns(arg_list)
             else:
                 self.rate_monitor.fill_list = []
                 #self.rate_monitor.run_list = arg_list
-                self.rate_monitor.fitter.data_dict['user_input'] = arg_list
-
+                self.rate_monitor.data_dict['user_input'] = arg_list 
+        
         # Append the user specified fills or runs to the dictionary made from the compareFits text file 
+        
         unique_runs = set()
-        for data_group,runs in self.rate_monitor.fitter.data_dict.iteritems():
+        for data_group,runs in self.rate_monitor.data_dict.iteritems():
                 unique_runs = unique_runs.union(runs)
         self.rate_monitor.run_list = list(unique_runs)
         #print self.rate_monitor.run_list 
@@ -378,10 +401,8 @@ class MonitorController:
             print "ERROR: No runs specified!"
             return False
 
-        #if self.set_plotter_fits:
-        if self.rate_monitor.plotter.set_plotter_fits:
-            #self.rate_monitor.plotter.setFits(fits)
-            self.rate_monitor.plotter.setFits(fit_info)
+        if self.set_plotter_fits: 
+            self.rate_monitor.plotter.setFits(fits)
 
         # This needs to be done after we have our run_list, otherwise we can't get the run_list!
         if self.do_cron_job:
@@ -492,28 +513,22 @@ class MonitorController:
         # type: (str) -> Dict[str,Dict[str,List[Any]]]
 
         fits = {}
-        fit_info = {}
         # Try to open the file containing the fit info
 
         print "Reading fit file: %s" % (fit_file)
 
         try:
             pkl_file = open(fit_file, 'rb')
-            #fits = pickle.load(pkl_file)    # {'obj': fit_params}
-            fit_dict = pickle.load(pkl_file)
-            if fit_dict.has_key('run_groups'):
-                fit_info = fit_dict
-                fits_format = 'multi_info'
-            else:
-                fits = fit_dict
-                for trig in fits.keys():
-                    if type(fits[trig]) is list:
-                        fits_format = 'dict_of_lists'
-                    if type(fits[trig]) is dict:
-                        fits_format = 'nested_dict'
+            fits = pickle.load(pkl_file)    # {'obj': fit_params}
             pkl_file.close()
+          
+            for trig in fits:
+                if type(fits[trig]) is list:
+                    fits_format = 'dict_of_lists' 
+                if type(fits[trig]) is dict: 
+                    fits_format = 'nested_dict'  
 
-            if fits_format == 'dict_of_lists':
+            if fits_format is 'dict_of_lists': 
                     tmp_dict = {}                   # {'obj': {'fit_type': fit_params } }
                     for obj in fits:
                         if fits[obj] is None:
@@ -523,18 +538,11 @@ class MonitorController:
                         tmp_dict[obj] = {}
                         tmp_dict[obj][fit_type] = fits[obj]
                     fits = tmp_dict
-                    fit_info['fit_runs'] = {}
-                    fit_info['triggers'] = fits
-                    return fit_info
-
-            if fits_format == 'nested_dict':
-                    fit_info['fit_runs'] = {}
-                    fit_info['triggers'] = fits
-                    return fit_info
+                    return fits
+            
+            if fits_format is 'nested_dict': 
+                    return fits  
  
-            if fits_format == 'multi_info':
-                    return fit_info
-
         except:
             # File failed to open
             print "Error: could not open fit file: %s" % (fit_file)
@@ -595,50 +603,18 @@ class MonitorController:
         if self.parseArgs(): self.rate_monitor.run()
 
     # Read text file of lists of runs 
-    #def readDataListTextFile(self,datalist_file):
-    #    path = datalist_file
-    #    f = open(path,'r')
-    #    dict1 = {}
-    #    i=1
-    #    for line in f:
-    #        key = '%idata' % (i)
-    #        data1 = []
-    #        for run in line.split():
-    #            data1.append(int(run))
-    #            dict1[key] = data1
-    #        i=i+1
-    #    if self.rate_monitor.use_fills == True:
-    #        for key in dict1:
-    #            dict1[key] = self.getRuns(dict1[key])
-    #    f.close()
-    #    return dict1
-
     def readDataListTextFile(self,datalist_file):
         path = datalist_file
         f = open(path,'r')
         dict1 = {}
         i=1
         for line in f:
-            if len(line.split(':')) == 2:
-                data1 = []
-                key = ''
-                n = 0
-                for word in line.split():
-                    if n  == 0:
-                        for character in word:
-                            if character is not ':':
-                                key = key + character
-                    else:
-                        data1.append(int(word))
-                        dict1[key] = data1
-                    n = n + 1
-            if len(line.split(':')) == 1:
-                key = '%idata' % (i)
-                data1 = []
-                for run in line.split():
-                    data1.append(int(run))
-                    dict1[key] = data1
-                i=i+1
+            key = 'data%i' % (i)
+            data1 = []
+            for run in line.split():
+                data1.append(int(run))
+                dict1[key] = data1
+            i=i+1
         if self.rate_monitor.use_fills == True:
             for key in dict1:
                 dict1[key] = self.getRuns(dict1[key])
