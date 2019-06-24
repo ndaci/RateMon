@@ -54,7 +54,7 @@ class PlotMaker:
 
         self.root_file_name = "a.root"
         self.save_dir = "."
-        self.plot_dir = "png"
+        self.plot_dir = "pdf"
 
         self.default_fit = "quad"
 
@@ -63,7 +63,8 @@ class PlotMaker:
         self.use_multi_fit = False
         self.show_errors = False
         self.show_eq = False
-        self.save_png = False
+
+        self.save_pdf = False
         self.save_root_file = False
 
         self.set_plotter_fits = False
@@ -156,16 +157,16 @@ class PlotMaker:
     def getFuncStr(self,fit_params):
         if fit_params[0] == "exp":          # Exponential
              plotFuncStr = "%.15f + %.5f*exp( %.15f+%.15f*x )" % (fit_params[1], fit_params[2], fit_params[3], fit_params[4])
-             funcStr = "%.5f + %.5f*exp( %.5f+%.5f*x )" % (fit_params[1], fit_params[2], fit_params[3], fit_params[4])
+             funcStr = "%.3e + %.3e*exp( %.3e+%.3e*x )" % (fit_params[1], fit_params[2], fit_params[3], fit_params[4])
         elif fit_params[0] == "linear":     # Linear
             plotFuncStr = "%.15f + x*%.15f" % (fit_params[1], fit_params[2])
-            funcStr = "%.5f + x*%.5f" % (fit_params[1], fit_params[2])
+            funcStr = "%.3e + x*%.3e" % (fit_params[1], fit_params[2])
         elif fit_params[0] == "sinh":
             plotFuncStr = "%.15f + %.15f*sinh(%.15f*x)" % (fit_params[3], fit_params[2], fit_params[1])
-            funcStr = "%.5f + %.5f*sinh(%.5f*x)" % (fit_params[3], fit_params[2], fit_params[1])
+            funcStr = "%.3e + %.3e*sinh(%.3e*x)" % (fit_params[3], fit_params[2], fit_params[1])
         else:                               # Polynomial
             plotFuncStr = "%.15f+x*(%.15f+ x*(%.15f+x*%.15f))" % (fit_params[1], fit_params[2], fit_params[3], fit_params[4])
-            funcStr = "%.5f+x*(%.5f+ x*(%.5f+x*%.5f))" % (fit_params[1], fit_params[2], fit_params[3], fit_params[4])
+            funcStr = "%.3e+x*(%.3e+ x*(%.3e+x*%.3e))" % (fit_params[1], fit_params[2], fit_params[3], fit_params[4])
 
         return plotFuncStr,funcStr
 
@@ -484,7 +485,7 @@ class PlotMaker:
         if self.save_root_file:
             self.saveRootFile(canvas)
 
-        if self.save_png:
+        if self.save_pdf:
             self.savePlot(trigger,canvas)
 
         return True
@@ -723,7 +724,7 @@ class PlotMaker:
         if self.save_root_file:
             self.saveRootFile(canvas)
 
-        if self.save_png:
+        if self.save_pdf:
             self.savePlot(trigger,canvas)
 
         return True
@@ -937,10 +938,10 @@ class PlotMaker:
         if self.save_root_file:
             self.saveRootFile(canvas)
 
-        if self.save_png:
-            canvas.Print(self.save_dir + "/" + "CertificationSummary_run%d" % run + ".png","png")
+        if self.save_pdf:
+            canvas.Print(self.save_dir + "/" + "CertificationSummary_run%d" % run + ".pdf","pdf")
             #self.savePlot("CertificationSummary_run%d" % run,canvas)
-            canvas.Print(self.save_dir + "/" + "CertificationSummary_run%d_%s" %(run,group) + ".png","png")
+            canvas.Print(self.save_dir + "/" + "CertificationSummary_run%d_%s" %(run,group) + ".pdf","pdf")
 
         gStyle.SetOptStat(1)
 
@@ -952,7 +953,7 @@ class PlotMaker:
         canvas.Write()
 
     def savePlot(self,name,canvas):
-        canvas.Print(self.save_dir + "/" + self.plot_dir + "/" + name + ".png", "png")
+        canvas.Print(self.save_dir + "/" + self.plot_dir + "/" + name + ".pdf", "pdf")
 
     # Writes the runs that were used to make the fit (or fits) onto the plot
     def writeFitRuns(self,run_dict,x,y):
@@ -977,4 +978,3 @@ class PlotMaker:
                 for run in sorted(runs):
                     latex.DrawLatex(x, y-0.025*i, "%i" %(run))
                     i=i+1 
-
