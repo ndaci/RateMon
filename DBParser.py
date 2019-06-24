@@ -1365,6 +1365,11 @@ class DBParser:
         except:
             print "Error: Unable to retrieve PD data."
 
+        #ND
+        #print "=============="
+        #print pdData
+        #print "=============="
+
         PrimaryDatasets = {}
         for pd, LS, rate, in pdData:
             if not PrimaryDatasets.has_key(pd):
