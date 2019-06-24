@@ -67,6 +67,7 @@ class RateMonitor:
         # TESTING: END #
 
         self.group_map = {}     # {'group_name': [trigger_name] }
+        self.data_dict = {}
 
         self.fill_list   = []   # Fills to get data from, Currently Unused
         self.run_list    = []   # Runs to get data from
@@ -204,7 +205,7 @@ class RateMonitor:
 
         # This is after update_online_fits, so as to ensure the proper save dir is set
         self.plotter.save_dir = self.save_dir
-        self.plotter.plot_dir = "png"
+        self.plotter.plot_dir = "pdf"
 
         counter = 0
         # Specifies how we want to organize the plots in the output directory
@@ -225,7 +226,7 @@ class RateMonitor:
                 for obj in plotted_objects:
                     if obj in self.group_map[grp]:
                         grp_objs.add(obj)
-                self.printHtml(png_list=grp_objs,save_dir=self.save_dir,index_dir=grp_path,png_dir="..")
+                self.printHtml(pdf_list=grp_objs,save_dir=self.save_dir,index_dir=grp_path,pdf_dir="..")
 
             #for grp in self.group_map:
             #    print "Plotting group: %s..." % grp
@@ -242,7 +243,7 @@ class RateMonitor:
         else:
             plotted_objects = self.makePlots(self.object_list)
             #self.printHtml(plotted_objects,self.plotter.save_dir)
-            self.printHtml(png_list=plotted_objects,save_dir=self.save_dir,index_dir=self.save_dir,png_dir=".")
+            self.printHtml(pdf_list=plotted_objects,save_dir=self.save_dir,index_dir=self.save_dir,pdf_dir=".")
             counter += len(plotted_objects)
         print "Total plot count: %d" % counter
 
@@ -342,7 +343,7 @@ class RateMonitor:
                 print "\tCreating directory: %s " % (run_dir)
                 os.mkdir(run_dir)
                 os.chdir(run_dir)
-                os.mkdir("png")
+                os.mkdir("pdf")
                 os.chdir(self.certify_dir)
             return
         else:
@@ -352,7 +353,7 @@ class RateMonitor:
             os.mkdir(self.save_dir)
             os.chdir(self.save_dir)
             print "\tCreating directory: %s " % (self.save_dir)
-            os.mkdir("png")
+            os.mkdir("pdf")
             if self.use_grouping:
                 for grp_dir in self.group_map.keys():
                     os.mkdir(grp_dir)
@@ -562,7 +563,7 @@ class RateMonitor:
             print "Making certification plots for run %d..." % run
             run_dir = os.path.join(self.certify_dir,"run%d" % run)
             self.plotter.save_dir = run_dir
-            self.plotter.plot_dir = "png"
+            self.plotter.plot_dir = "pdf"
             self.plotter.root_file_name = "HLT_LS_vs_rawRate_Fitted_Run%d_CERTIFICATION.root" % run
             plotted_objects = []
             for obj in self.object_list:
@@ -573,7 +574,7 @@ class RateMonitor:
                 if self.plotter.makeCertifyPlot(obj,run,lumi_info[run]):
                     print "Plotting %s..." % obj
                     plotted_objects.append(obj)
-            self.printHtml(png_list=plotted_objects,save_dir=run_dir,index_dir=self.save_dir,png_dir=".")
+            self.printHtml(pdf_list=plotted_objects,save_dir=run_dir,index_dir=self.save_dir,pdf_dir=".")
 
     # We create a prediction dictionary on a per run basis, which covers all triggers in that run
     # TODO: Should move this to DataParser.py
@@ -676,38 +677,38 @@ class RateMonitor:
         self.data_parser.convert_output = prev_state
         return pred_dict
 
-    ## NOTE1: This requires the .png file to be in the proper directory, as specified by self.group_map
-    ## NOTE2: This function assumes that the sub-directory where the plots are located is named 'png'
-    ##def printHtml(self,png_list,save_dir):
+    ## NOTE1: This requires the .pdf file to be in the proper directory, as specified by self.group_map
+    ## NOTE2: This function assumes that the sub-directory where the plots are located is named 'pdf'
+    ##def printHtml(self,pdf_list,save_dir):
     ##    # type: (List[str],str) -> None
     ##    try:
     ##        htmlFile = open(save_dir+"/index.html", "wb")
     ##        htmlFile.write("<!DOCTYPE html>\n")
     ##        htmlFile.write("<html>\n")
     ##        htmlFile.write("<style>.image { float:right; margin: 5px; clear:justify; font-size: 6px; font-family: Verdana, Arial, sans-serif; text-align: center;}</style>\n")
-    ##        for path_name in sorted(png_list):  # This controls the order that the images will be displayed in
-    ##            file_name = "%s/png/%s.png" % (save_dir,path_name)
+    ##        for path_name in sorted(pdf_list):  # This controls the order that the images will be displayed in
+    ##            file_name = "%s/pdf/%s.pdf" % (save_dir,path_name)
     ##            if os.access(file_name,os.F_OK):
-    ##                htmlFile.write("<div class=image><a href=\'png/%s.png\' target='_blank'><img width=398 height=229 border=0 src=\'png/%s.png\'></a><div style=\'width:398px\'>%s</div></div>\n" % (path_name,path_name,path_name))
+    ##                htmlFile.write("<div class=image><a href=\'pdf/%s.pdf\' target='_blank'><img width=398 height=229 border=0 src=\'pdf/%s.pdf\'></a><div style=\'width:398px\'>%s</div></div>\n" % (path_name,path_name,path_name))
     ##        htmlFile.write("</html>\n")
     ##        htmlFile.close
     ##    except:
     ##        print "Unable to write index.html file"
 
     # For this we want to be able to specify where the images are located, relative to the index.html file
-    def printHtml(self,png_list,save_dir,index_dir,png_dir="."):
+    def printHtml(self,pdf_list,save_dir,index_dir,pdf_dir="."):
         # save_dir:  The full path to the save directory
         # index_dir: The full path to the index.html file
-        # png_dir:   The relative path from the index.html file to the png_dir
+        # pdf_dir:   The relative path from the index.html file to the pdf_dir
         try:
             htmlFile = open(index_dir+"/index.html","wb")
             htmlFile.write("<!DOCTYPE html>\n")
             htmlFile.write("<html>\n")
             htmlFile.write("<style>.image { float:left; margin: 5px; clear:justify; font-size: 6px; font-family: Verdana, Arial, sans-serif; text-align: center;}</style>\n")
-            for path_name in sorted(png_list):  # This controls the order that the images will be displayed in
-                file_name = "%s/png/%s.png" % (save_dir,path_name)
+            for path_name in sorted(pdf_list):  # This controls the order that the images will be displayed in
+                file_name = "%s/pdf/%s.pdf" % (save_dir,path_name)
                 if os.access(file_name,os.F_OK):
-                    rel_dir = os.path.join(png_dir,"png/%s.png" % path_name)
+                    rel_dir = os.path.join(pdf_dir,"pdf/%s.pdf" % path_name)
                     html_str = ""
                     html_str += "<div class=image>"
                     html_str += "<a href=\'%s\' target='_blank'>" % rel_dir
