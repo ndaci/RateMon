@@ -59,7 +59,7 @@ class MonitorController:
         self.rate_monitor.plotter.use_multi_fit  = False
         self.rate_monitor.plotter.show_errors    = False
         self.rate_monitor.plotter.show_eq        = False
-        self.rate_monitor.plotter.save_png       = True
+        self.rate_monitor.plotter.save_pdf       = True
         self.rate_monitor.plotter.save_root_file = True
         self.rate_monitor.plotter.show_fit_runs  = False
 
@@ -89,6 +89,8 @@ class MonitorController:
                 "pathVeto=",
                 "Secondary",
                 "datasetRate",
+                "datasetBandwidth",
+                "datasetSize",
                 "L1ARate",
                 "streamRate",
                 "streamBandwidth",
@@ -196,6 +198,34 @@ class MonitorController:
                 
                 self.rate_monitor.plotter.root_file_name   = "Dataset_Rates.root"
                 #self.rate_monitor.plotter.label_Y = "dataset rate / num colliding bx [Hz]"
+            elif label == "--datasetBandwidth":
+                # Make plots of the dataset bandwidths
+                # NEEDS TO BE TESTED
+                self.rate_monitor.use_dataset_bandwidth = True
+
+                self.rate_monitor.data_parser.use_L1_triggers  = False
+                self.rate_monitor.data_parser.use_HLT_triggers = False
+                self.rate_monitor.data_parser.use_streams  = False 
+                self.rate_monitor.data_parser.use_datasets = True
+                self.rate_monitor.data_parser.use_L1A_rate = False
+                
+                self.rate_monitor.data_parser.normalize_bunches = False
+
+                self.rate_monitor.plotter.root_file_name   = "Dataset_Bandwidth.root"
+            elif label == "--datasetSize":
+                # Make plots of dataset sizes
+                # NEEDS TO BE TESTED
+                self.rate_monitor.use_dataset_size = True
+
+                self.rate_monitor.data_parser.use_L1_triggers  = False
+                self.rate_monitor.data_parser.use_HLT_triggers = False
+                self.rate_monitor.data_parser.use_streams  = False
+                self.rate_monitor.data_parser.use_datasets = True
+                self.rate_monitor.data_parser.use_L1A_rate = False
+
+                self.rate_monitor.data_parser.normalize_bunches = False
+                
+                self.rate_monitor.plotter.root_file_name   = "Dataset_Size.root"
             elif label == "--L1ARate":
                 # Make plots of the L1A rate
                 self.rate_monitor.data_parser.use_L1_triggers  = False
